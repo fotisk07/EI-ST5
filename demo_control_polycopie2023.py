@@ -13,7 +13,7 @@ import _env
 import preprocessing
 import processing
 import postprocessing
-from utils import compute_gradient_descent, P_l, integrate
+from utils import compute_gradient_descent,integrate, gradient_descent_student
 #import solutions
 
 
@@ -32,9 +32,8 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
 
     k = 0
     (M, N) = np.shape(domain_omega)
-    numb_iter = 20
+    numb_iter = 200
     energy = np.zeros((numb_iter+1, 1), dtype=np.float64)
-    ene = 10**10
 
     while k < numb_iter and mu > 10**(-5):
         print('---- iteration number = ', k)
@@ -47,45 +46,48 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         print('3. computing objective function, i.e., energy')
 
         ene = your_compute_objective_function(domain_omega, u, spacestep)
+        print("energy",ene)
         energy[k] = ene
         print('4. computing parametric gradient')
 
-        bool_a = 1 if energy[k] < energy[k-1] else 0
         grad = - np.real(Alpha * u * p)
 
         while ene >= energy[k] and mu > 10 ** -5:
             l=0 
             print('    a. computing gradient descent')
-            chi = P_l(domain_omega,chi,l,mu,grad)
+            chi  = gradient_descent_student(chi, grad, domain_omega, mu)
+            chi = np.maximum(0, np.minimum(chi + l ,  1))
 
-            print('     b. computing projected gradient')   
+            print('    b. computing projected gradient')   
+
+            # Premier calcul de integral de khi
             chi_rob=0
-            z=0
             for i in range(np.shape(domain_omega)[0]):
                 for j in range(np.shape(domain_omega)[1]):
-                    if domain_omega[i][j]==3:
-                        chi_rob= chi_rob+chi[i][j]
-                        z=z+1
-            int_chi=chi_rob/z
-            while abs(int_chi -beta )> epsilon1:
-                print("l : ",l)
-                if int_chi>beta:
-                    l=l-epsilon2
+                    if domain_omega[i][j]==_env.NODE_ROBIN:
+                        chi_rob += chi[i][j] * spacestep**2
+                        
+            while abs(chi_rob - beta )> epsilon1:
+                if chi_rob >beta:
+                    l -= epsilon2
                 else:
-                    l=l+ epsilon2
-                new_chi=P_l(domain_omega,chi,l,mu,grad)
+                    l +=   epsilon2
+
+
+                chi = gradient_descent_student(chi, grad, domain_omega, mu)
+                chi = np.maximum(1, np.minimum(chi + l ,  0))
+
+                # Calcul de integral de khi
                 chi_rob=0
                 z=0
                 for i in range(np.shape(domain_omega)[0]):
                     for j in range(np.shape(domain_omega)[1]):
-                        if domain_omega[i][j]==3:
-                            chi_rob= chi_rob+new_chi[i][j]
-                            z=z+1
-                int_chi=chi_rob/z
+                        if domain_omega[i][j]==_env.NODE_ROBIN:
+                            chi_rob += chi[i][j] * spacestep**2
 
 
             print('    c. computing solution of Helmholtz problem, i.e., u')
-            alpha_rob*= chi # update alpha_rob
+            alpha_rob= chi * Alpha # update alpha_rob
             u = processing.solve_helmholtz(domain_omega, spacestep, omega, f, f_dir, f_neu, f_rob,
                                              beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
             
@@ -102,6 +104,9 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         k += 1
 
     print('end. computing solution of Helmholtz problem, i.e., u')
+
+    numb_iter = k
+    energy = energy[0:(numb_iter+1)]
 
     return chi, energy, u, grad
 
@@ -120,14 +125,10 @@ def your_compute_objective_function(domain_omega, u, spacestep):
         equation.
     """
     
-    energy = 0 
-    # Integrate u
-    for i in range(domain_omega.shape[0]):
-        for j in range(domain_omega.shape[1]):
-            if domain_omega[i,j] == type:
-                energy += np.abs(u[i,j])**2 
-
-    return energy * spacestep**2
+    # Integrate u 
+    energy = np.sum(np.abs(u) ** 2) * spacestep ** 2
+    
+    return energy
 
 
 if __name__ == '__main__':
@@ -146,9 +147,9 @@ if __name__ == '__main__':
     ky = -1.0
     wavenumber = np.sqrt(kx**2 + ky**2)  # wavenumber
     wavenumber = 10.0
-    epsilon1 = 10**(-1)
-    epsilon2 = 10**(-1)
-    beta = 0.5
+    epsilon1 = 10**(-2)
+    epsilon2 = 10**(-2)
+    beta = 0.05
 
     # ----------------------------------------------------------------------
     # -- Do not modify this cell, these are the values that you will be assessed against.
