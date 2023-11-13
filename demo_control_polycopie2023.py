@@ -32,8 +32,8 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
 
     k = 0
     (M, N) = np.shape(domain_omega)
-    numb_iter = 50
-    energy = np.zeros((numb_iter+1, 1), dtype=np.float64)
+    numb_iter = 10
+    energy = np.zeros((numb_iter, 1), dtype=np.float64)
 
     while k < numb_iter:
         print('---- iteration number = ', k)
