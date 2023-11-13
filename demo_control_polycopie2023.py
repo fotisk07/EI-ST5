@@ -13,7 +13,7 @@ import _env
 import preprocessing
 import processing
 import postprocessing
-from utils import compute_gradient_descent,integrate, gradient_descent_student
+from utils import integrate, gradient_descent_student
 #import solutions
 
 
@@ -32,10 +32,10 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
 
     k = 0
     (M, N) = np.shape(domain_omega)
-    numb_iter = 200
+    numb_iter = 50
     energy = np.zeros((numb_iter+1, 1), dtype=np.float64)
 
-    while k < numb_iter and mu > 10**(-5):
+    while k < numb_iter:
         print('---- iteration number = ', k)
         print('1. computing solution of Helmholtz problem, i.e., u')
         u = processing.solve_helmholtz(domain_omega, spacestep, omega, f, f_dir, f_neu, f_rob,
@@ -53,6 +53,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         grad = - np.real(Alpha * u * p)
 
         while ene >= energy[k] and mu > 10 ** -5:
+            print("mu",mu)
             l=0 
             print('    a. computing gradient descent')
             chi  = gradient_descent_student(chi, grad, domain_omega, mu)
@@ -105,8 +106,6 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
 
     print('end. computing solution of Helmholtz problem, i.e., u')
 
-    numb_iter = k
-    energy = energy[0:(numb_iter+1)]
 
     return chi, energy, u, grad
 
@@ -126,7 +125,11 @@ def your_compute_objective_function(domain_omega, u, spacestep):
     """
     
     # Integrate u 
-    energy = np.sum(np.abs(u) ** 2) * spacestep ** 2
+    energy =  0 
+    for i in range(np.shape(domain_omega)[0]):
+        for j in range(np.shape(domain_omega)[1]):
+            if domain_omega[i][j]==_env.NODE_INTERIOR:
+                energy += np.abs(u[i][j])**2 * spacestep**2
     
     return energy
 
@@ -148,8 +151,8 @@ if __name__ == '__main__':
     wavenumber = np.sqrt(kx**2 + ky**2)  # wavenumber
     wavenumber = 10.0
     epsilon1 = 10**(-2)
-    epsilon2 = 10**(-2)
-    beta = 0.05
+    epsilon2 = 10**(-1)
+    beta = 0.01
 
     # ----------------------------------------------------------------------
     # -- Do not modify this cell, these are the values that you will be assessed against.
@@ -232,4 +235,5 @@ if __name__ == '__main__':
     postprocessing._plot_error(err)
     postprocessing._plot_energy_history(energy)
 
+    print("Number of steps: ", len(energy) - 1)
     print('End.')
