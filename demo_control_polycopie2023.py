@@ -44,14 +44,23 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         ene = your_compute_objective_function(domain_omega, u, spacestep)
         print('4. computing parametric gradient')
         bool_a = True
-        grad = 0 
+        grad =   - np.real(Alpha * u * p)
 
         while ene >= energy[k] and mu > 10 ** -5:
             print('    a. computing gradient descent')
+            chi = chi - mu * grad
             print('    b. computing projected gradient')
+            grad = processing.projected_gradient(domain_omega, spacestep, omega, f, f_dir, f_neu, f_rob,
+                                                    beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob,
+                                                    p, Alpha, chi, V_obj, mu1, V_0)
             print('    c. computing solution of Helmholtz problem, i.e., u')
+            u = processing.solve_helmholtz(domain_omega, spacestep, omega, f, f_dir, f_neu, f_rob,
+                                             beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
+            
             print('    d. computing objective function, i.e., energy (E)')
             ene = your_compute_objective_function(domain_omega, u, spacestep)
+    
+
             if bool_a:
                 # The step is increased if the energy decreased
                 mu = mu * 1.1
