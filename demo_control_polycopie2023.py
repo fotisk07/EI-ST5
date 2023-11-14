@@ -13,7 +13,7 @@ import _env
 import preprocessing
 import processing
 import postprocessing
-from utils import integrate, gradient_descent_student
+from utils import gradient_descent_student, compute_projected
 #import solutions
 
 
@@ -57,7 +57,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
             l=0 
             print('    a. computing gradient descent')
             chi  = gradient_descent_student(chi, grad, domain_omega, mu)
-            chi = np.maximum(0, np.minimum(chi + l ,  1))
+            chi = compute_projected(chi, domain_omega, V_obj)
 
             print('    b. computing projected gradient')   
 
@@ -76,7 +76,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
 
 
                 chi = gradient_descent_student(chi, grad, domain_omega, mu)
-                chi = np.maximum(1, np.minimum(chi + l ,  0))
+                chi = compute_projected(chi, domain_omega, V_obj)
 
                 # Calcul de integral de khi
                 chi_rob=0
@@ -102,6 +102,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
                 # The step is decreased is the energy increased
                 mu = mu / 2
 
+
         k += 1
 
     print('end. computing solution of Helmholtz problem, i.e., u')
@@ -125,13 +126,9 @@ def your_compute_objective_function(domain_omega, u, spacestep):
     """
     
     # Integrate u 
-    energy =  0 
-    for i in range(np.shape(domain_omega)[0]):
-        for j in range(np.shape(domain_omega)[1]):
-            if domain_omega[i][j]==_env.NODE_INTERIOR:
-                energy += np.abs(u[i][j])**2 * spacestep**2
     
-    return energy
+    
+    return np.sum(np.abs(u)**2) * spacestep**2
 
 
 if __name__ == '__main__':
@@ -140,7 +137,7 @@ if __name__ == '__main__':
     # -- Fell free to modify the function call in this cell.
     # ----------------------------------------------------------------------
     # -- set parameters of the geometry
-    N = 50  # number of points along x-axis
+    N = 50 # number of points along x-axis
     M = 2 * N  # number of points along y-axis
     level = 0 # level of the fractal
     spacestep = 1.0 / N  # mesh size
@@ -149,7 +146,7 @@ if __name__ == '__main__':
     kx = -1.0
     ky = -1.0
     wavenumber = np.sqrt(kx**2 + ky**2)  # wavenumber
-    wavenumber = 10.0
+    wavenumber = 10
     epsilon1 = 10**(-2)
     epsilon2 = 10**(-1)
     beta = 0.01
@@ -186,6 +183,7 @@ if __name__ == '__main__':
 
     # -- define absorbing material
     Alpha = 10.0 - 10.0 * 1j
+    # Alpha = 0 
     # -- this is the function you have written during your project
     #import compute_alpha
     #Alpha = compute_alpha.compute_alpha(...)
