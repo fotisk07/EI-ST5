@@ -2,8 +2,9 @@
 
 
 # Python packages
-import matplotlib.pyplot
+
 import numpy as np
+import matplotlib.pyplot
 import os
 from scipy.integrate import simps
 
@@ -106,7 +107,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
 
     print('end. computing solution of Helmholtz problem, i.e., u')
 
-
+    
     return chi, energy, u, grad
 
 
@@ -137,7 +138,7 @@ def your_compute_objective_function(domain_omega, u, spacestep):
 if __name__ == '__main__':
 
     # ----------------------------------------------------------------------
-    # -- Fell free to modify the function call in this cell.
+    # -- Feel free to modify the function call in this cell.
     # ----------------------------------------------------------------------
     # -- set parameters of the geometry
     N = 50  # number of points along x-axis
@@ -146,7 +147,7 @@ if __name__ == '__main__':
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
-    kx = -1.0
+    kx = 0
     ky = -1.0
     wavenumber = np.sqrt(kx**2 + ky**2)  # wavenumber
     wavenumber = 10.0
