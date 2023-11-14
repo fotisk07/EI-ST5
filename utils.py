@@ -18,6 +18,9 @@ def gradient_descent_student(chi, grad, domain_omega,mu):
 			if domain_omega[i, j] == _env.NODE_ROBIN:
 				chi[i,j] = chi[i,j] - mu*grad[i -1 ,j]
 			
+
+	chi = processing.set2zero(chi, domain_omega)
+	
 	return chi
 
 
@@ -74,6 +77,7 @@ def compute_gradient_descent(chi, grad, domain, mu):
 				# print(i, j - 1, "-----", "i , j - 1")
 				chi[i, j - 1] = chi[i, j - 1] - mu * grad[i, j]
 
+	chi = processing.set2zero(chi, domain)
 	return chi
 
 def integrate(domain , var, step, boundary):
@@ -90,6 +94,8 @@ def integrate(domain , var, step, boundary):
 
 
 def compute_projected(chi, domain, V_obj):
+
+
     """This function performs the projection of $\chi^n - mu*grad
 
     To perform the optimization, we use a projected gradient algorithm. This
@@ -138,4 +144,26 @@ def compute_projected(chi, domain, V_obj):
         ecart = fin - debut
         # print('le volume est', V, 'le volume objectif est', V_obj)
 
+    return chi
+
+
+
+
+def compute_gradient_descent2(chi, grad, domain, mu):
+    d = np.roll(grad, 1, axis=1)
+    d[:, 0] = 0
+
+    h = np.roll(grad, -1, axis=0)
+    h[-1, :] = 0
+
+    b = np.roll(grad, 1, axis=0)
+    b[0, :] = 0
+
+    g = np.roll(grad, -1, axis=1)
+    g[:, -1] = 0
+    
+    _grad = d + h + b + g
+    
+    chi = chi - mu * _grad
+    chi = processing.set2zero(chi, domain)
     return chi
