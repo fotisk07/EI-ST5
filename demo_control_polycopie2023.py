@@ -5,7 +5,6 @@
 import matplotlib.pyplot
 import numpy as np
 import os
-from scipy.integrate import simps
 from tqdm import tqdm
 
 # MRG packages
@@ -13,7 +12,7 @@ import _env
 import preprocessing
 import processing
 import postprocessing
-from utils import gradient_descent_student, compute_projected, compute_gradient_descent2
+from utils import compute_projected, compute_gradient_descent2, compute_gradient_descent
 #import solutions
 
 
@@ -43,14 +42,14 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
                                        beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
         ene = your_compute_objective_function(domain_omega, u, spacestep)
         energy[k] = ene
-        grad = - np.real(Alpha * u * p)
+        grad =  - np.real(Alpha * u * p)
 
         mu = start_mu
-        while ene >= energy[k] and mu > 10 ** -5:
+        while ene >= energy[k] and mu > 10 **(-5):
             new_chi = chi.copy()
-            new_chi  = gradient_descent_student(new_chi, grad, domain_omega, mu)
-            new_chi = compute_projected(chi, domain_omega, V_obj)
-            alpha_rob= chi * Alpha # update alpha_rob
+            new_chi  = compute_gradient_descent(new_chi, grad, domain_omega, mu)
+            new_chi = compute_projected(new_chi, domain_omega, V_obj)
+            alpha_rob= new_chi * Alpha # update alpha_rob
             u = processing.solve_helmholtz(domain_omega, spacestep, omega, f, f_dir, f_neu, f_rob,
                                              beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
             new_ene = your_compute_objective_function(domain_omega, u, spacestep)
@@ -111,7 +110,7 @@ if __name__ == '__main__':
     wavenumber = 10
     epsilon1 = 10**(-2)
     epsilon2 = 10**(-1)
-    beta = 0.03
+    beta = 0.01
 
     # ----------------------------------------------------------------------
     # -- Do not modify this cell, these are the values that you will be assessed against.
@@ -162,7 +161,6 @@ if __name__ == '__main__':
     V_obj = 0.5
 
     mu = 5  # initial gradient step
-    # start_mu = 10**(-5)  # parameter of the volume functional
 
     # ----------------------------------------------------------------------
     # -- Do not modify this cell, these are the values that you will be assessed against.

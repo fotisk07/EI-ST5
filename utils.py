@@ -11,7 +11,7 @@ def BelongsInteriorDomain(node):
 	else:
 		return 0
 
-def gradient_descent_student(chi, grad, domain_omega,mu):
+def classic_gradient_descent(chi, grad, domain_omega,mu):
 	(M, N) = np.shape(domain_omega)
 	for i in range(0, M):
 		for j in range(0, N):
@@ -46,50 +46,24 @@ def compute_gradient_descent(chi, grad, domain, mu):
 	"""
 
 	(M, N) = np.shape(domain)
-	# for i in range(0, M):
-	# 	for j in range(0, N):
-	# 		if domain_omega[i, j] != _env.NODE_ROBIN:
-	# 			chi[i, j] = chi[i, j] - mu * grad[i, j]
-	# # for i in range(0, M):
-	# 	for j in range(0, N):
-	# 		if preprocessing.is_on_boundary(domain[i , j]) == 'BOUNDARY':
-	# 			chi[i,j] = chi[i,j] - mu*grad[i,j]
-	# print(domain,'jesuisla')
-	#chi[50,:] = chi[50,:] - mu*grad[50,:]
 	for i in range(1, M - 1):
 		for j in range(1, N - 1):
-			#print(i,j)
-			#chi[i,j] = chi[i,j] - mu * grad[i,j]
 			a = BelongsInteriorDomain(domain[i + 1, j])
 			b = BelongsInteriorDomain(domain[i - 1, j])
 			c = BelongsInteriorDomain(domain[i, j + 1])
 			d = BelongsInteriorDomain(domain[i, j - 1])
 			if a == 2:
-				# print(i+1,j, "-----", "i+1,j")
 				chi[i + 1, j] = chi[i + 1, j] - mu * grad[i, j]
 			if b == 2:
-				# print(i - 1, j, "-----", "i - 1, j")
 				chi[i - 1, j] = chi[i - 1, j] - mu * grad[i, j]
 			if c == 2:
-				# print(i, j + 1, "-----", "i , j + 1")
 				chi[i, j + 1] = chi[i, j + 1] - mu * grad[i, j]
 			if d == 2:
-				# print(i, j - 1, "-----", "i , j - 1")
 				chi[i, j - 1] = chi[i, j - 1] - mu * grad[i, j]
 
 	chi = processing.set2zero(chi, domain)
+	
 	return chi
-
-def integrate(domain , var, step, boundary):
-	integral = 0
-	for i in range(len(var)):
-		for j in range(len(var[0])):
-			if domain[i,j] == boundary:
-				integral = integral + var[i,j]*step**2
-			
-
-	return integral
-
 
 
 
