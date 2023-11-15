@@ -31,27 +31,30 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
 
     k = 0
     (M, N) = np.shape(domain_omega)
-    numb_iter = 4
+    numb_iter = 20
     energy = np.zeros((numb_iter, 1), dtype=np.float64)
-
+    mu = start_mu
     for k in tqdm(range(numb_iter)):
-        # print('---- iteration number = ', k)
+        if mu < 10**(-5):
+            break
         u = processing.solve_helmholtz(domain_omega, spacestep, omega, f, f_dir, f_neu, f_rob,
-                                       beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
+                                    beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
         p = processing.solve_helmholtz(domain_omega, spacestep, omega, -2 * np.conj(u), f_dir, f_neu, f_rob,
-                                       beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
+                                    beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
         ene = your_compute_objective_function(domain_omega, u, spacestep)
         energy[k] = ene
         grad =  - np.real(Alpha * u * p)
 
-        mu = start_mu
+        # mu = start_mu
         while ene >= energy[k] and mu > 10 **(-5):
             new_chi = chi.copy()
             new_chi  = compute_gradient_descent(new_chi, grad, domain_omega, mu)
             new_chi = compute_projected(new_chi, domain_omega, V_obj)
+            new_chi [new_chi>0.5] = 1
+            new_chi [new_chi<=0.5] = 0
             alpha_rob= new_chi * Alpha # update alpha_rob
             u = processing.solve_helmholtz(domain_omega, spacestep, omega, f, f_dir, f_neu, f_rob,
-                                             beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
+                                            beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
             new_ene = your_compute_objective_function(domain_omega, u, spacestep)
     
             if new_ene < ene:
@@ -64,12 +67,11 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
             ene = new_ene
 
         chi = new_chi.copy()
-       
+        
 
-    print('end. computing solution of Helmholtz problem, i.e., u')
+    print("Number of steps: ", k)
 
-
-    return chi, energy, u, grad
+    return chi, energy[:k], u, grad
 
 
 def your_compute_objective_function(domain_omega, u, spacestep):
@@ -98,9 +100,9 @@ if __name__ == '__main__':
     # -- Fell free to modify the function call in this cell.
     # ----------------------------------------------------------------------
     # -- set parameters of the geometry
-    N = 50 # number of points along x-axis
+    N = 70 # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 0   # level of the fractal
+    level = 2   # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -195,5 +197,4 @@ if __name__ == '__main__':
     postprocessing._plot_error(err)
     postprocessing._plot_energy_history(energy)
 
-    print("Number of steps: ", len(energy) - 1)
     print('End.')
